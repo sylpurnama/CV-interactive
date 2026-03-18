@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syaiful Muflichin Purnama — Geospatial CV</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --panel: #0f1729;
+    --panel2: #131d35;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --border: rgba(0,229,255,0.12);
+    --glow: 0 0 20px rgba(0,229,255,0.25);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 28px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1000;
+  }
+  .header-left { display:flex; align-items:center; gap:16px; }
+  .logo-dot {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: var(--glow);
+    position: relative;
+    animation: pulse 2.5s infinite;
+  }
+  .logo-dot::after {
+    content:'';
+    position:absolute;
+    inset:6px;
+    background: var(--bg);
+    border-radius:50%;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 10px rgba(0,229,255,0.3); }
+    50% { box-shadow: 0 0 30px rgba(0,229,255,0.7); }
+  }
+  .header-name { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.04em; }
+  .header-title { font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; font-family:'Space Mono',monospace; }
+  .header-right { display:flex; gap:8px; }
+  .filter-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+    font-weight:700;
+  }
+  .filter-btn[data-cat="work"].active { background: #f59e0b; border-color:#f59e0b; box-shadow: 0 0 20px rgba(245,158,11,0.4); }
+  .filter-btn[data-cat="education"].active { background: var(--accent3); border-color:var(--accent3); box-shadow: 0 0 20px rgba(16,185,129,0.4); }
+  .filter-btn[data-cat="research"].active { background: var(--accent2); border-color:var(--accent2); box-shadow: 0 0 20px rgba(124,58,237,0.4); }
+
+  /* ── LAYOUT ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 340px;
+    min-width: 340px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .sidebar::-webkit-scrollbar { width:4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius:4px; }
+
+  /* Profile section */
+  .profile-block {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .profile-block h2 {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 12px;
+  }
+  .profile-summary {
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: #94a3b8;
+  }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .contact-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .contact-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+  .contact-value {
+    font-size: 0.72rem;
+    color: var(--text);
+  }
+
+  /* Timeline */
+  .timeline-section {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .section-header h3 {
+    font-size: 0.63rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .timeline { position: relative; }
+  .timeline::before {
+    content:'';
+    position:absolute;
+    left: 8px; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent2), var(--accent3));
+    opacity: 0.4;
+  }
+  .timeline-item {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .timeline-item:hover { transform: translateX(3px); }
+  .timeline-item:hover .tl-card { border-color: rgba(0,229,255,0.4); }
+
+  .tl-dot {
+    position: absolute;
+    left: 2px; top: 12px;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+  .tl-dot.work { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.6); }
+  .tl-dot.education { background: var(--accent3); box-shadow: 0 0 8px rgba(16,185,129,0.6); }
+  .tl-dot.research { background: var(--accent2); box-shadow: 0 0 8px rgba(124,58,237,0.6); }
+
+  .tl-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: border-color 0.2s;
+  }
+  .tl-period {
+    font-size: 0.6rem;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .tl-title { font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; }
+  .tl-org { font-size: 0.72rem; color: var(--accent); }
+  .tl-desc { font-size: 0.7rem; color: #94a3b8; margin-top: 5px; line-height: 1.5; }
+
+  /* Skills */
+  .skills-section {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .skill-row { margin-bottom: 10px; }
+  .skill-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .skill-name { font-size: 0.75rem; }
+  .skill-pct { font-size: 0.62rem; font-family: 'Space Mono', monospace; color: var(--muted); }
+  .skill-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .skill-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1.5s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+  .skill-fill.gis { background: linear-gradient(to right, var(--accent), #0088ff); }
+  .skill-fill.rs { background: linear-gradient(to right, var(--accent2), #a78bfa); }
+  .skill-fill.carto { background: linear-gradient(to right, var(--accent3), #34d399); }
+  .skill-fill.drone { background: linear-gradient(to right, #f59e0b, #fcd34d); }
+  .skill-fill.gee { background: linear-gradient(to right, #ec4899, #f472b6); }
+  .skill-fill.teach { background: linear-gradient(to right, #06b6d4, #67e8f9); }
+
+  /* ── MAP ── */
+  #map {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Detail popup overlay */
+  .detail-overlay {
+    position: absolute;
+    bottom: 30px; right: 20px;
+    width: 300px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+  }
+  .detail-overlay.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+  .detail-close {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  .detail-cat {
+    font-size: 0.58rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 6px;
+  }
+  .detail-cat.work { color: #f59e0b; }
+  .detail-cat.education { color: var(--accent3); }
+  .detail-cat.research { color: var(--accent2); }
+  .detail-title { font-size: 1rem; font-weight: 800; margin-bottom: 4px; }
+  .detail-org { font-size: 0.78rem; color: var(--accent); margin-bottom: 6px; }
+  .detail-period {
+    font-size: 0.62rem;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .detail-desc { font-size: 0.75rem; color: #94a3b8; line-height: 1.6; }
+
+  /* Coords display */
+  .coords-bar {
+    position: absolute;
+    bottom: 10px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,15,30,0.85);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    z-index: 500;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+  }
+  .coords-bar span { color: var(--accent); }
+
+  /* Stats strip */
+  .stats-strip {
+    display: flex;
+    padding: 0 20px;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--panel);
+  }
+  .stat-item {
+    flex: 1;
+    padding: 8px 4px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* Selected marker pulse */
+  @keyframes markerPulse {
+    0%   { transform: scale(1); opacity:1; }
+    50%  { transform: scale(1.35); opacity:0.6; }
+    100% { transform: scale(1); opacity:1; }
+  }
+  .marker-selected { animation: markerPulse 0.8s ease 3; }
+  .timeline-item.hidden { display: none; }
+
+  /* Leaflet custom pins */
+  .custom-marker {
+    width: 32px; height: 32px;
+    position: relative;
+  }
+  .marker-inner {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 3px solid var(--bg);
+    position: absolute;
+    top: 0; left: 4px;
+    display: flex; align-items:center; justify-content:center;
+    font-size: 11px;
+  }
+  .marker-tail {
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    position: absolute;
+    bottom: -8px; left: 10px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-dot"></div>
+    <div>
+      <div class="header-name">SYAIFUL MUFLICHIN PURNAMA</div>
+      <div class="header-title">GIS · Cartography · Remote Sensing · Geospatial Analysis</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="filter-btn active" data-cat="all">ALL</button>
+    <button class="filter-btn" data-cat="work">WORK</button>
+    <button class="filter-btn" data-cat="education">EDUCATION</button>
+    <button class="filter-btn" data-cat="research">RESEARCH</button>
+  </div>
+</header>
+
+<div class="stats-strip">
+  <div class="stat-item"><div class="stat-num">10+</div><div class="stat-lbl">Years Exp.</div></div>
+  <div class="stat-item"><div class="stat-num">8</div><div class="stat-lbl">Publications</div></div>
+  <div class="stat-item"><div class="stat-num">2</div><div class="stat-lbl">IP Rights</div></div>
+  <div class="stat-item"><div class="stat-num">3</div><div class="stat-lbl">Institutions</div></div>
+  <div class="stat-item"><div class="stat-num">4</div><div class="stat-lbl">Provinces</div></div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <!-- Profile -->
+    <div class="profile-block">
+      <h2>// PROFILE</h2>
+      <p class="profile-summary">Geospatial professional specializing in GIS, Cartography, Remote Sensing, and Geospatial Analysis. Experienced in environmental monitoring, natural resource management, agrarian reform, and geospatial education.</p>
+      <div class="contact-grid">
+        <div class="contact-item">
+          <span class="contact-label">Email</span>
+          <span class="contact-value">syaiful.m.purnama</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Phone</span>
+          <span class="contact-value">0857-4313-1314</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Born</span>
+          <span class="contact-value">09 June 1989</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Location</span>
+          <span class="contact-value">Bantul, Yogyakarta</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-section">
+      <div class="section-header">
+        <h3>// TIMELINE</h3>
+        <div class="section-line"></div>
+      </div>
+      <div class="timeline" id="timeline">
+
+        <div class="timeline-item" data-cat="work" data-id="0">
+          <div class="tl-dot work"></div>
+          <div class="tl-card">
+            <div class="tl-period">March 2022 — Present</div>
+            <div class="tl-title">Lecturer Survey & Mapping</div>
+            <div class="tl-org">Sinar Mas Berau Coal Polytechnic</div>
+            <div class="tl-desc">Teaching surveying & mapping, curriculum development, research & publication.</div>
+          </div>
+        </div>
+
+        <div class="timeline-item" data-cat="education" data-id="1">
+          <div class="tl-dot education"></div>
+          <div class="tl-card">
+            <div class="tl-period">Aug 2018 — April 2022</div>
+            <div class="tl-title">S2 Geomatics Engineering</div>
+            <div class="tl-org">Universitas Gadjah Mada</div>
+            <div class="tl-desc">GPA 3.57 / 4.00 · Field surveyor of research studies</div>
+          </div>
+        </div>
+
+        <div class="timeline-item" data-cat="work" data-id="2">
+          <div class="tl-dot work"></div>
+          <div class="tl-card">
+            <div class="tl-period">Feb 2019 — Dec 2021</div>
+            <div class="tl-title">Agrarian Reform Consultant</div>
+            <div class="tl-org">National Land Agency (BPN) — Regional Office</div>
+            <div class="tl-desc">TORA data inventory, field surveys, coordination with GTRA team.</div>
+          </div>
+        </div>
+
+        <div class="timeline-item" data-cat="work" data-id="3">
+          <div class="tl-dot work"></div>
+          <div class="tl-card">
+            <div class="tl-period">Feb 2015 — Aug 2018</div>
+            <div class="tl-title">Researcher Assistant</div>
+            <div class="tl-org">LAPAN — Remote Sensing Technology & Data Center</div>
+            <div class="tl-desc">Remote sensing data processing, dissemination to gov agencies, training.</div>
+          </div>
+        </div>
+
+        <div class="timeline-item" data-cat="education" data-id="4">
+          <div class="tl-dot education"></div>
+          <div class="tl-card">
+            <div class="tl-period">Aug 2008 — May 2014</div>
+            <div class="tl-title">S1 Cartography & Remote Sensing</div>
+            <div class="tl-org">Universitas Gadjah Mada</div>
+            <div class="tl-desc">GPA 3.16 / 4.00 · Lab assistant · Field surveyor</div>
+          </div>
+        </div>
+
+        <div class="timeline-item" data-cat="research" data-id="5">
+          <div class="tl-dot research"></div>
+          <div class="tl-card">
+            <div class="tl-period">2024</div>
+            <div class="tl-title">Geo Analytics — Berau Land Cover Change</div>
+            <div class="tl-org">Ministry of Education Research Grant 2024</div>
+            <div class="tl-desc">Head of Basic Research: Land cover & use change in Berau Regency, East Kalimantan.</div>
+          </div>
+        </div>
+
+        <div class="timeline-item" data-cat="research" data-id="6">
+          <div class="tl-dot research"></div>
+          <div class="tl-card">
+            <div class="tl-period">2023</div>
+            <div class="tl-title">Land Use Change Analysis — Kendal</div>
+            <div class="tl-org">LPPM Universitas Negeri Semarang</div>
+            <div class="tl-desc">Applied research on land use change using Google Earth Engine for spatial planning in Kendal Regency.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="skills-section">
+      <div class="section-header">
+        <h3>// SKILLS</h3>
+        <div class="section-line"></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-meta"><span class="skill-name">GIS (ArcGIS / QGIS)</span><span class="skill-pct">95%</span></div>
+        <div class="skill-bar"><div class="skill-fill gis" data-w="95"></div></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-meta"><span class="skill-name">Remote Sensing</span><span class="skill-pct">90%</span></div>
+        <div class="skill-bar"><div class="skill-fill rs" data-w="90"></div></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-meta"><span class="skill-name">Cartography</span><span class="skill-pct">88%</span></div>
+        <div class="skill-bar"><div class="skill-fill carto" data-w="88"></div></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-meta"><span class="skill-name">Google Earth Engine</span><span class="skill-pct">82%</span></div>
+        <div class="skill-bar"><div class="skill-fill gee" data-w="82"></div></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-meta"><span class="skill-name">Drone / UAV (APDI Cert.)</span><span class="skill-pct">80%</span></div>
+        <div class="skill-bar"><div class="skill-fill drone" data-w="80"></div></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-meta"><span class="skill-name">Academic Teaching</span><span class="skill-pct">85%</span></div>
+        <div class="skill-bar"><div class="skill-fill teach" data-w="85"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP AREA -->
+  <div style="position:relative; flex:1; overflow:hidden;">
+    <div id="map"></div>
+
+    <!-- Detail Overlay -->
+    <div class="detail-overlay" id="detailOverlay">
+      <button class="detail-close" id="detailClose">✕</button>
+      <div class="detail-cat" id="detailCat"></div>
+      <div class="detail-title" id="detailTitle"></div>
+      <div class="detail-org" id="detailOrg"></div>
+      <div class="detail-period" id="detailPeriod"></div>
+      <div class="detail-desc" id="detailDesc"></div>
+    </div>
+
+    <!-- Coords bar -->
+    <div class="coords-bar" id="coordsBar">
+      LAT <span id="latVal">-0.000</span> &nbsp;|&nbsp; LNG <span id="lngVal">115.000</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────
+const locations = [
+  {
+    id: 0,
+    cat: 'work',
+    title: 'Lecturer Survey & Mapping',
+    org: 'Sinar Mas Berau Coal Polytechnic',
+    period: 'March 2022 — Present',
+    lat: 2.1667, lng: 117.4833,
+    city: 'Berau, East Kalimantan',
+    color: '#f59e0b',
+    icon: '🎓',
+    desc: 'Teaching theory & practice of surveying and mapping. Developing curriculum and conducting research published in national/international journals. Currently heading a Ministry-funded basic research project on land cover change in Berau Regency.'
+  },
+  {
+    id: 2,
+    cat: 'work',
+    title: 'Agrarian Reform Individual Consultant',
+    org: 'National Land Agency (BPN) — Regional Office',
+    period: 'Feb 2019 — Dec 2021',
+    lat: -7.7956, lng: 110.3695,
+    city: 'Yogyakarta',
+    color: '#f59e0b',
+    icon: '🗺️',
+    desc: 'Assisted GTRA Daily Implementation Team. Conducted TORA data inventory, identification, analysis, and reporting. Carried out field surveys and produced location maps of agrarian reform activities.'
+  },
+  {
+    id: 3,
+    cat: 'work',
+    title: 'Researcher Assistant',
+    org: 'LAPAN — Remote Sensing Technology & Data Center',
+    period: 'Feb 2015 — Aug 2018',
+    lat: -6.2088, lng: 106.8456,
+    city: 'Jakarta (LAPAN HQ)',
+    color: '#f59e0b',
+    icon: '🛰️',
+    desc: 'Assisted in research data processing and writing. Disseminated remote sensing data to government agencies, ministries, and TNI/POLRI. Provided instruction in remote sensing data processing.'
+  },
+  {
+    id: 1,
+    cat: 'education',
+    title: 'S2 Geomatics Engineering',
+    org: 'Universitas Gadjah Mada',
+    period: 'Aug 2018 — April 2022',
+    lat: -7.7700, lng: 110.3786,
+    city: 'Yogyakarta',
+    color: '#10b981',
+    icon: '📐',
+    desc: 'GPA 3.57 / 4.00. Field surveyor for research studies. Advanced studies in geomatics, spatial analysis, and geodesy.'
+  },
+  {
+    id: 4,
+    cat: 'education',
+    title: 'S1 Cartography & Remote Sensing',
+    org: 'Universitas Gadjah Mada',
+    period: 'Aug 2008 — May 2014',
+    lat: -7.7710, lng: 110.3796,
+    city: 'Yogyakarta',
+    color: '#10b981',
+    icon: '🎓',
+    desc: 'GPA 3.16 / 4.00. Laboratory assistant on-campus. Field surveyor for research studies. Foundation in cartography, photogrammetry, and remote sensing.'
+  },
+  {
+    id: 5,
+    cat: 'research',
+    title: 'Geo Analytics — Berau Land Cover',
+    org: 'Ministry of Education Grant 2024',
+    period: '2024',
+    lat: 2.0833, lng: 117.4000,
+    city: 'Berau Regency, East Kalimantan',
+    color: '#7c3aed',
+    icon: '🔬',
+    desc: 'Head researcher in Basic Research for Beginner Lecturers project. Geo-analytic study of land cover and land use change in Berau Regency, East Kalimantan using machine learning and multi-temporal satellite imagery.'
+  },
+  {
+    id: 6,
+    cat: 'research',
+    title: 'Land Use Change — Kendal (GEE)',
+    org: 'LPPM Universitas Negeri Semarang 2023',
+    period: '2023',
+    lat: -6.9328, lng: 110.2040,
+    city: 'Kendal Regency, Central Java',
+    color: '#7c3aed',
+    icon: '🌍',
+    desc: 'Second researcher in Applied Research project. Analysis of land use change using Google Earth Engine as spatial planning recommendation. Collaboration with Public Works and Spatial Planning Agency (PUPR).'
+  },
+  {
+    id: 7,
+    cat: 'research',
+    title: 'IP: Land Cover Monitoring System — Kendal',
+    org: 'Intellectual Property Rights — 2023',
+    period: '2023',
+    lat: -6.9500, lng: 110.2200,
+    city: 'Kendal Regency, Central Java',
+    color: '#7c3aed',
+    icon: '💡',
+    desc: 'Intellectual Property Right (Computer Programme): Kendal District Land Cover Monitoring Information System. A web-based GIS application for land cover monitoring.'
+  },
+  {
+    id: 8,
+    cat: 'research',
+    title: 'IP: GIS Web App — Riau Islands',
+    org: 'Intellectual Property Rights — 2018',
+    period: '2018',
+    lat: 3.9457, lng: 108.1429,
+    city: 'Riau Islands Province',
+    color: '#7c3aed',
+    icon: '💡',
+    desc: 'Intellectual Property Right (Computer Programme): GIS Web Application System for Monitoring Natural Resources and Environment in Riau Islands Province. Developed during tenure at LAPAN.'
+  },
+];
+
+// ── MAP INIT ──────────────────────────────────────────────
+// Force map container to fill parent
+document.getElementById('map').style.height = '100%';
+document.getElementById('map').style.width = '100%';
+
+const map = L.map('map', {
+  center: [-2.5, 114.0],
+  zoom: 5,
+  zoomControl: false,
+  attributionControl: true
+});
+
+// Primary: CartoDB dark
+const cartoTile = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  maxZoom: 19,
+  subdomains: 'abcd',
+  attribution: '© CartoDB'
+});
+
+// Fallback: OpenStreetMap styled dark via Stadia
+const stadiaTile = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+  maxZoom: 20,
+  attribution: '© Stadia Maps'
+});
+
+// Try CartoDB first, fallback to Stadia
+cartoTile.addTo(map);
+cartoTile.on('tileerror', () => {
+  map.removeLayer(cartoTile);
+  stadiaTile.addTo(map);
+});
+
+// Always add OSM as ultimate fallback
+const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors',
+  opacity: 0
+});
+osmTile.addTo(map);
+stadiaTile.on('tileerror', () => {
+  osmTile.setOpacity(1);
+});
+
+L.control.zoom({ position: 'topright' }).addTo(map);
+
+// Fix map size after render
+setTimeout(() => map.invalidateSize(), 300);
+
+// Update coords bar
+map.on('mousemove', e => {
+  document.getElementById('latVal').textContent = e.latlng.lat.toFixed(4);
+  document.getElementById('lngVal').textContent = e.latlng.lng.toFixed(4);
+});
+
+// ── MARKERS ──────────────────────────────────────────────
+const markers = {};
+let lastSelectedEl = null;
+
+function createMarkerIcon(loc, selected = false) {
+  const shadow = selected ? `0 0 30px ${loc.color}` : `0 0 15px ${loc.color}88`;
+  const scale = selected ? 'scale(1.2)' : 'scale(1)';
+  const html = `
+    <div style="position:relative; width:44px; height:52px; transform:${scale}; transition:transform 0.3s;">
+      <div style="
+        width:36px; height:36px;
+        background:${loc.color};
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        position:absolute;
+        top:0; left:4px;
+        box-shadow: ${shadow};
+        border: 2px solid rgba(255,255,255,${selected ? 0.8 : 0.3});
+        transition: all 0.3s;
+      "></div>
+      <div style="
+        position:absolute;
+        top:6px; left:10px;
+        font-size:14px;
+        line-height:1;
+        filter: ${selected ? 'brightness(1.5)' : 'none'};
+      ">${loc.icon}</div>
+      ${selected ? `<div style="
+        position:absolute; bottom:-4px; left:50%; transform:translateX(-50%);
+        width:8px; height:8px; border-radius:50%;
+        background:${loc.color}; box-shadow: 0 0 10px ${loc.color};
+        animation: markerPulse 0.8s ease infinite;
+      "></div>` : ''}
+    </div>`;
+  return L.divIcon({ html, className:'', iconSize:[44,52], iconAnchor:[22,52] });
+}
+
+locations.forEach(loc => {
+  const marker = L.marker([loc.lat, loc.lng], { icon: createMarkerIcon(loc) }).addTo(map);
+  marker.on('click', () => showDetail(loc));
+  markers[loc.id] = { marker, loc };
+});
+
+// ── DETAIL PANEL ──────────────────────────────────────────
+let selectedId = null;
+
+function showDetail(loc) {
+  // Reset previous selected marker
+  if (selectedId !== null && markers[selectedId]) {
+    const prev = markers[selectedId];
+    prev.marker.setIcon(createMarkerIcon(prev.loc, false));
+  }
+
+  // Highlight new marker
+  selectedId = loc.id;
+  markers[loc.id].marker.setIcon(createMarkerIcon(loc, true));
+
+  // Highlight timeline item
+  document.querySelectorAll('.timeline-item').forEach(el => {
+    el.style.outline = 'none';
+  });
+  const tlItem = document.querySelector(`.timeline-item[data-id="${loc.id}"]`);
+  if (tlItem) {
+    tlItem.style.outline = `2px solid ${loc.color}`;
+    tlItem.style.borderRadius = '8px';
+    tlItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Update detail panel
+  document.getElementById('detailCat').className = `detail-cat ${loc.cat}`;
+  document.getElementById('detailCat').textContent = `// ${loc.cat.toUpperCase()} · ${loc.city}`;
+  document.getElementById('detailTitle').textContent = loc.title;
+  document.getElementById('detailOrg').textContent = loc.org;
+  document.getElementById('detailPeriod').textContent = loc.period;
+  document.getElementById('detailDesc').textContent = loc.desc;
+  document.getElementById('detailOverlay').classList.add('visible');
+
+  // FlyTo with appropriate zoom
+  const zoom = loc.cat === 'research' ? 9 : loc.cat === 'education' ? 13 : 11;
+  map.flyTo([loc.lat, loc.lng], zoom, { animate: true, duration: 1.2 });
+}
+
+document.getElementById('detailClose').addEventListener('click', () => {
+  document.getElementById('detailOverlay').classList.remove('visible');
+});
+
+// ── TIMELINE CLICK ────────────────────────────────────────
+document.querySelectorAll('.timeline-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const id = parseInt(item.dataset.id);
+    // Search all locations by id (markers may include non-timeline ones)
+    const found = locations.find(l => l.id === id);
+    if (found) showDetail(found);
+  });
+});
+
+// ── FILTER ───────────────────────────────────────────────
+let activeFilter = 'all';
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.cat;
+
+    // Filter timeline
+    document.querySelectorAll('.timeline-item').forEach(item => {
+      if (activeFilter === 'all' || item.dataset.cat === activeFilter) {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+
+    // Reset selected state
+    selectedId = null;
+    document.querySelectorAll('.timeline-item').forEach(el => { el.style.outline = 'none'; });
+
+    // Filter markers
+    Object.values(markers).forEach(({ marker, loc }) => {
+      marker.setIcon(createMarkerIcon(loc, false)); // reset
+      if (activeFilter === 'all' || loc.cat === activeFilter) {
+        marker.addTo(map);
+      } else {
+        map.removeLayer(marker);
+      }
+    });
+
+    // Hide detail if filtered out
+    document.getElementById('detailOverlay').classList.remove('visible');
+  });
+});
+
+// ── SKILL BAR ANIMATION ───────────────────────────────────
+setTimeout(() => {
+  document.querySelectorAll('.skill-fill').forEach(el => {
+    el.style.width = el.dataset.w + '%';
+  });
+}, 400);
+</script>
+</body>
+</html>
