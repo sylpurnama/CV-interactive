@@ -10,7 +10,7 @@ The CV features:
 
 From my early days studying Cartography & Remote Sensing at UGM, to working as a Researcher Assistant at LAPAN, an Agrarian Reform Consultant at BPN, and now as a Lecturer at Sinar Mas Berau Coal Polytechnic — every pin on that map represents a chapter of my professional journey.
 
-👉 Explore the live CV here: [[your-link-here]](https://sylpurnama.github.io/CV-interactive/)
+👉 Explore the live CV here: (https://sylpurnama.github.io/CV-interactive/)
 
 Built with: Leaflet.js · HTML/CSS/JS · OpenStreetMap
 
